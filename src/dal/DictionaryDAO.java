@@ -8,17 +8,19 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class DictionaryDAO implements IDictionaryDAO {
 
-	
     private Connection connection;
+    private ExecutorService executorService;
 
     public DictionaryDAO() {
         try {
             this.connection = DatabaseConfig.getConnection();
+            this.executorService = Executors.newFixedThreadPool(6); // Thread pool with 5 threads
         } catch (SQLException e) {
             throw new RuntimeException("Failed to initialize database connection: " + e.getMessage(), e);
         }
@@ -42,22 +44,31 @@ public class DictionaryDAO implements IDictionaryDAO {
                     String urduMeanings = values[1].trim();
                     String persianMeanings = values[2].trim();
 
-                    try {
-                        int wordId = saveWord(word);
-                        if (wordId == -1) {
-                            duplicateWords.add(word); // Track duplicates
-                        } else {
-                            saveMeanings(wordId, urduMeanings.split("/"), "urdu_meanings", "urdu_mean");
-                            saveMeanings(wordId, persianMeanings.split("/"), "persian_meanings", "persian_mean");
+                    executorService.submit(() -> {
+                        try {
+                            int wordId = saveWord(word);
+                            if (wordId == -1) {
+                                synchronized (duplicateWords) {
+                                    duplicateWords.add(word); // Track duplicates
+                                }
+                            } else {
+                                saveMeanings(wordId, urduMeanings.split("/"), "urdu_meanings", "urdu_mean");
+                                saveMeanings(wordId, persianMeanings.split("/"), "persian_meanings", "persian_mean");
+                            }
+                        } catch (SQLException e) {
+                            System.err.println("Error processing word '" + word + "': " + e.getMessage());
                         }
-                    } catch (SQLException e) {
-                        System.err.println("Error processing word '" + word + "': " + e.getMessage());
-                    }
+                    });
                 }
             }
 
+            executorService.shutdown();
+            while (!executorService.isTerminated()) {
+                Thread.sleep(100); // Wait for all tasks to complete
+            }
+
             connection.commit(); // Commit transaction
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             throw new RuntimeException("Error reading CSV file: " + filePath, e);
         } catch (SQLException e) {
             try {
@@ -76,7 +87,7 @@ public class DictionaryDAO implements IDictionaryDAO {
         return duplicateWords;
     }
 
-    private int saveWord(String word) throws SQLException {
+    public int saveWord(String word) throws SQLException {
         if (isWordDuplicate(word)) {
             System.out.println("Word '" + word + "' already exists in the dictionary.");
             return -1;
@@ -95,7 +106,7 @@ public class DictionaryDAO implements IDictionaryDAO {
         throw new SQLException("Failed to insert word '" + word + "' into database.");
     }
 
-    private void saveMeanings(int wordId, String[] meanings, String tableName, String columnName) throws SQLException {
+    public void saveMeanings(int wordId, String[] meanings, String tableName, String columnName) throws SQLException {
         String query = String.format("INSERT INTO %s (word_id, %s) VALUES (?, ?)", tableName, columnName);
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             for (String meaning : meanings) {
@@ -116,4 +127,19 @@ public class DictionaryDAO implements IDictionaryDAO {
             }
         }
     }
+
+    public void close() {
+        try {
+            if (executorService != null) {
+                executorService.shutdownNow(); // Gracefully shut down the thread pool
+            }
+            if (connection != null) {
+                connection.close(); // Close the database connection
+            }
+        } catch (SQLException e) {
+            System.err.println("Error closing database connection: " + e.getMessage());
+        }
+    }
+    
+    
 }

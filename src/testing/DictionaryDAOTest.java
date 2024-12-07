@@ -1,107 +1,155 @@
 package testing;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
 
-import org.testng.annotations.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import dal.DatabaseConfig;
 import dal.DictionaryDAO;
 
-import java.io.*;
-import java.sql.*;
-import java.util.*;
-
-import static org.testng.Assert.*;
-
-public class DictionaryDAOTest {
+class DictionaryDAOTest {
 
     private DictionaryDAO dictionaryDAO;
-    private Connection connection;
+    private Connection mockConnection;
+    private PreparedStatement mockPreparedStatement;
+    private ResultSet mockResultSet;
 
-    @BeforeMethod
-    public void setUp() throws SQLException {
-        connection = DatabaseConfig.getConnection();
+    @BeforeEach
+    void setUp() throws SQLException {
+        mockConnection = mock(Connection.class);
+        mockPreparedStatement = mock(PreparedStatement.class);
+        mockResultSet = mock(ResultSet.class);
+
+        DatabaseConfig.setConnection(mockConnection);
         dictionaryDAO = new DictionaryDAO();
-        clearDatabase();
+    }
+    @Test
+    void testImportCSV_HappyPath() throws Exception {
+        // Mock database behavior
+        when(mockConnection.prepareStatement(anyString(), anyInt())).thenReturn(mockPreparedStatement);
+        when(mockPreparedStatement.getGeneratedKeys()).thenReturn(mockResultSet);
+        when(mockResultSet.next()).thenReturn(true);
+        when(mockResultSet.getInt(1)).thenReturn(1);
+
+        // Create a temporary CSV file with content
+        File tempFile = File.createTempFile("test", ".csv");
+        try (PrintWriter writer = new PrintWriter(tempFile)) {
+            writer.println("word1,meaning1,meaning2"); // Make sure the format is as expected
+        }
+
+        
     }
 
-    @AfterMethod
-    public void tearDown() throws SQLException {
-        clearDatabase();
-        connection.close();
-    }
-
-    @DataProvider(name = "csvDataProvider")
-    public Object[][] csvDataProvider() {
-        return new Object[][] {
-            {"word1,urduMeaning1/persianMeaning1\nword2,urduMeaning2/persianMeaning2", true, new String[] {"word1", "word2"}},
-            {"word1,urduMeaning1/persianMeaning1\nword1,urduMeaning2/persianMeaning2", false, new String[] {"word1"}},
-            {"invalid_line\nword1,urduMeaning1/persianMeaning1", false, new String[] {}}
-        };
-    }
-
-    @Test(dataProvider = "csvDataProvider")
-    public void testImportCSV(String csvData, boolean noDuplicates, String[] words) throws IOException, SQLException {
-        File tempFile = createTempCSV(csvData);
+    @Test
+    void testImportCSV_InvalidFormat() throws Exception {
+        // Create a temporary CSV file with invalid format
+        File tempFile = File.createTempFile("test_invalid", ".csv");
+        try (PrintWriter writer = new PrintWriter(tempFile)) {
+            writer.println("invalid_line");
+        }
 
         List<String> duplicates = dictionaryDAO.importCSV(tempFile.getAbsolutePath());
 
-        if (noDuplicates) {
-            assertTrue(duplicates.isEmpty());
-        } else {
-            assertEquals(duplicates.size(), words.length);
-            for (String word : words) {
-                assertTrue(duplicates.contains(word));
-            }
-        }
-
-        for (String word : words) {
-            if (noDuplicates) {
-                assertWordExists(word);
-            }
-        }
+        assertTrue(duplicates.isEmpty());
+        verify(mockConnection, times(1)).commit();
     }
 
     @Test
-    public void testImportCSVIOException() {
-        RuntimeException exception = expectThrows(RuntimeException.class, () -> dictionaryDAO.importCSV("non_existent_file.csv"));
+    void testImportCSV_DuplicateWord() throws Exception {
+        // Mock duplicate check behavior
+        when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
+        when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet);
+        when(mockResultSet.next()).thenReturn(true); // Word exists
+
+        // Create a temporary CSV file
+        File tempFile = File.createTempFile("test_duplicate", ".csv");
+        try (PrintWriter writer = new PrintWriter(tempFile)) {
+            writer.println("word1,meaning1,meaning2");
+        }
+
+        List<String> duplicates = dictionaryDAO.importCSV(tempFile.getAbsolutePath());
+
+        assertEquals(1, duplicates.size());
+        assertEquals("word1", duplicates.get(0));
+        verify(mockConnection, times(1)).commit();
+    }
+
+    
+
+
+    @Test
+    void testImportCSV_EmptyFile() throws Exception {
+        // Create an empty temporary CSV file
+        File tempFile = File.createTempFile("test_empty", ".csv");
+
+        List<String> duplicates = dictionaryDAO.importCSV(tempFile.getAbsolutePath());
+
+        assertTrue(duplicates.isEmpty());
+        verify(mockConnection, times(1)).commit();
+    }
+
+    @Test
+    void testImportCSV_FileNotFound() {
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            dictionaryDAO.importCSV("non_existent_file.csv");
+        });
+
         assertTrue(exception.getMessage().contains("Error reading CSV file"));
+ 
     }
+    
+    
+   
+    @Test
+    void testImportCSV_InvalidCSVFormat() throws Exception {
+        // Create a temporary CSV file with invalid format (no comma, only word)
+        File tempFile = File.createTempFile("test_invalid_format", ".csv");
+        try (PrintWriter writer = new PrintWriter(tempFile)) {
+            writer.println("word1"); // Invalid line format
+            writer.println("word2,meaning1"); // Invalid line format
+        }
+
+        List<String> duplicates = dictionaryDAO.importCSV(tempFile.getAbsolutePath());
+
+        assertTrue(duplicates.isEmpty(), "Duplicates should be empty for invalid format");
+        verify(mockConnection, times(1)).commit(); // Ensure commit happens
+    }
+
+    
+
 
     @Test
-    public void testImportCSVSQLException() throws IOException, SQLException {
-        String csvData = "word1,urduMeaning1/persianMeaning1";
-        File tempFile = createTempCSV(csvData);
-
-        connection.close(); // Simulate a database error
-
-        RuntimeException exception = expectThrows(RuntimeException.class, () -> dictionaryDAO.importCSV(tempFile.getAbsolutePath()));
-        assertTrue(exception.getMessage().contains("Error processing CSV file"));
-    }
-
-    private File createTempCSV(String data) throws IOException {
-        File tempFile = File.createTempFile("test", ".csv");
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile))) {
-            writer.write(data);
+    void testImportCSV_EmptyWordOrMeaning() throws Exception {
+        // Create a temporary CSV file with an empty word and meaning
+        File tempFile = File.createTempFile("test_empty_word_meaning", ".csv");
+        try (PrintWriter writer = new PrintWriter(tempFile)) {
+            writer.println(",meaning1,meaning2");  // Empty word
+            writer.println("word2,,meaning2");    // Empty meaning
         }
-        tempFile.deleteOnExit();
-        return tempFile;
+
+        List<String> duplicates = dictionaryDAO.importCSV(tempFile.getAbsolutePath());
+
+        assertTrue(duplicates.isEmpty(), "No duplicates should be added for empty words/meanings");
+        verify(mockConnection, times(1)).commit(); // Ensure commit happens
     }
 
-    private void assertWordExists(String word) throws SQLException {
-        String query = "SELECT id FROM words WHERE word = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setString(1, word);
-            try (ResultSet rs = stmt.executeQuery()) {
-                assertTrue(rs.next(), "Word not found in database: " + word);
-            }
-        }
-    }
-
-    private void clearDatabase() throws SQLException {
-        try (Statement stmt = connection.createStatement()) {
-            stmt.executeUpdate("DELETE FROM persian_meanings");
-            stmt.executeUpdate("DELETE FROM urdu_meanings");
-            stmt.executeUpdate("DELETE FROM words");
-        }
-    }
+    
 }

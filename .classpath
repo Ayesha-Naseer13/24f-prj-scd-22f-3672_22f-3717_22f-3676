@@ -15,5 +15,9 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/javaFX"/>
 	<classpathentry kind="con" path="org.testng.TESTNG_CONTAINER"/>
 	<classpathentry kind="lib" path="D:/mysql-connector-j-8.0.31.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/5"/>
+	<classpathentry kind="lib" path="C:/Users/lenovo/Documents/byte-buddy-1.15.10.jar"/>
+	<classpathentry kind="lib" path="C:/Users/lenovo/Documents/byte-buddy-agent-1.15.10.jar"/>
+	<classpathentry kind="lib" path="C:/Users/lenovo/Documents/mockito-core-5.5.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

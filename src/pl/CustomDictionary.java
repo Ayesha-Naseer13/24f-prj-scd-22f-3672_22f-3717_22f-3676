@@ -1,24 +1,28 @@
 package pl;
 
-import bll.CustomDictionaryBO;
-import bll.ICustomDictionaryBO;
+import java.io.File;
+
+import bll.BLLFacade;
+import bll.IBLLFacade;
 import dto.WordTranslation;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 
-import java.io.File;
-
 public class CustomDictionary {
 
-    private final ICustomDictionaryBO dictionaryBO;
+    private final IBLLFacade dictionaryBO;
 
     public CustomDictionary() {
-        this.dictionaryBO = new CustomDictionaryBO(); 
+        this.dictionaryBO = new BLLFacade(); 
     }
 
     public VBox getCustomDictionaryPane() {

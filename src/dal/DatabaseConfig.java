@@ -64,8 +64,12 @@ public class DatabaseConfig {
      */
     private static Properties loadDBProperties() {
         Properties properties = new Properties();
-        try (InputStream input = new FileInputStream("db.properties")) {
-            logger.info("Loading database properties from file: db.properties");
+        try (InputStream input = new FileInputStream("src/resources/db.properties")) 
+ {
+            if (input == null) {
+                throw new IOException("Database properties file not found in resources folder.");
+            }
+            logger.info("Loading database properties from resource file: db.properties");
             properties.load(input);
             logger.info("Database properties loaded successfully.");
         } catch (IOException e) {
@@ -73,5 +77,15 @@ public class DatabaseConfig {
             throw new RuntimeException("Error loading database properties.", e);
         }
         return properties;
+    }
+
+
+    /**
+     * Sets a mock connection for testing purposes.
+     * 
+     * @param mockConnection the mock connection to set
+     */
+    public static void setConnection(Connection mockConnection) {
+        DatabaseConfig.connection = mockConnection;
     }
 }

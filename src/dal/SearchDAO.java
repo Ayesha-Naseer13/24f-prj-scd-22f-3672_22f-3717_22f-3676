@@ -21,24 +21,42 @@ public class SearchDAO implements ISearchDAO {
     @Override
     public List<String> getSuggestions(String input, boolean searchByKey, String language) {
         List<String> suggestions = new ArrayList<>();
-        String query;
+        final RuntimeException[] threadException = new RuntimeException[1]; // Capture exception from thread
 
-        if (searchByKey) {
-            query = "SELECT word FROM words WHERE word LIKE ?";
-        } else {
-            query = language.equalsIgnoreCase("Urdu")
-                    ? "SELECT DISTINCT urdu_mean FROM urdu_meanings WHERE urdu_mean LIKE ?"
-                    : "SELECT DISTINCT persian_mean FROM persian_meanings WHERE persian_mean LIKE ?";
+        Thread suggestionThread = new Thread(() -> {
+            String query;
+
+            if (searchByKey) {
+                query = "SELECT word FROM words WHERE word LIKE ?";
+            } else {
+                query = language.equalsIgnoreCase("Urdu")
+                        ? "SELECT DISTINCT urdu_mean FROM urdu_meanings WHERE urdu_mean LIKE ?"
+                        : "SELECT DISTINCT persian_mean FROM persian_meanings WHERE persian_mean LIKE ?";
+            }
+
+            try (PreparedStatement stmt = connection.prepareStatement(query)) {
+                stmt.setString(1, input + "%");
+                ResultSet rs = stmt.executeQuery();
+                while (rs.next()) {
+                    synchronized (suggestions) {
+                        suggestions.add(rs.getString(1));
+                    }
+                }
+            } catch (SQLException e) {
+                threadException[0] = new RuntimeException("Error fetching suggestions: " + e.getMessage(), e);
+            }
+        });
+
+        suggestionThread.start();
+        try {
+            suggestionThread.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Thread interrupted while fetching suggestions", e);
         }
 
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setString(1, input + "%");
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                suggestions.add(rs.getString(1));
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error fetching suggestions: " + e.getMessage(), e);
+        if (threadException[0] != null) {
+            throw threadException[0]; // Re-throw the exception from the thread
         }
 
         return suggestions;
@@ -101,7 +119,6 @@ public class SearchDAO implements ISearchDAO {
         return results;
     }
 
- 
     @Override
     public void addSearchTermToHistory(String searchTerm) {
         String query = "INSERT INTO search_history (search_term, search_date) VALUES (?, NOW())";
