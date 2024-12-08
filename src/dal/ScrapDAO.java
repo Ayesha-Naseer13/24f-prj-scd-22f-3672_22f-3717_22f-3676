@@ -3,17 +3,25 @@ package dal;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 public class ScrapDAO implements IScrapDAO {
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/dictionary?connectTimeout=5000";
-    private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "";
+
+    private final Connection connection;
+
+    // Initialize connection using DatabaseConfig
+    public ScrapDAO() {
+        try {
+            this.connection = DatabaseConfig.getConnection(); // Use DatabaseConfig to get connection
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to connect to the database: " + e.getMessage(), e);
+        }
+    }
 
     @Override
     public String scrapeAndInsertWordFromFile(String filePath) {
@@ -48,11 +56,9 @@ public class ScrapDAO implements IScrapDAO {
     public String scrapeAndInsertWordFromUrl(String url) {
         String[] userAgents = {
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36",
-            
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Firefox/87.0",
             "Mozilla/5.0 (iPhone; CPU iPhone OS 14_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.2 Mobile/15E148 Safari/604.1",
             "Mozilla/5.0 (iPad; CPU OS 14_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1",
-            
         };
 
         for (String userAgent : userAgents) {
@@ -98,7 +104,7 @@ public class ScrapDAO implements IScrapDAO {
     }
 
     private String saveToDatabase(String word, String urduMeaning, String persianMeaning) {
-        try (Connection connection = getConnection()) {
+        try {
             int wordId = findOrInsertWord(connection, word);
 
             if (urduMeaning != null) {
@@ -108,16 +114,12 @@ public class ScrapDAO implements IScrapDAO {
                 addPersianMeaningIfNotExists(connection, wordId, persianMeaning);
             }
             return "Word and meanings added successfully to the database.";
-        } catch (Exception e) {
+        } catch (SQLException e) {
             return "Database error: " + e.getMessage();
         }
     }
 
-    private Connection getConnection() throws Exception {
-        return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-    }
-
-    private int findOrInsertWord(Connection conn, String word) throws Exception {
+    private int findOrInsertWord(Connection conn, String word) throws SQLException {
         String normalizedWord = normalizeArabic(word);
         String selectQuery = "SELECT id FROM words WHERE word = ?";
         try (PreparedStatement selectStmt = conn.prepareStatement(selectQuery)) {
@@ -137,10 +139,10 @@ public class ScrapDAO implements IScrapDAO {
                 return generatedKeys.getInt(1);
             }
         }
-        throw new Exception("Failed to insert word: " + word);
+        throw new SQLException("Failed to insert word: " + word);
     }
 
-    private void addUrduMeaningIfNotExists(Connection conn, int wordId, String urduMeaning) throws Exception {
+    private void addUrduMeaningIfNotExists(Connection conn, int wordId, String urduMeaning) throws SQLException {
         String selectQuery = "SELECT id FROM urdu_meanings WHERE word_id = ? AND urdu_mean = ?";
         try (PreparedStatement selectStmt = conn.prepareStatement(selectQuery)) {
             selectStmt.setInt(1, wordId);
@@ -159,7 +161,7 @@ public class ScrapDAO implements IScrapDAO {
         }
     }
 
-    private void addPersianMeaningIfNotExists(Connection conn, int wordId, String persianMeaning) throws Exception {
+    private void addPersianMeaningIfNotExists(Connection conn, int wordId, String persianMeaning) throws SQLException {
         String selectQuery = "SELECT id FROM persian_meanings WHERE word_id = ? AND persian_mean = ?";
         try (PreparedStatement selectStmt = conn.prepareStatement(selectQuery)) {
             selectStmt.setInt(1, wordId);

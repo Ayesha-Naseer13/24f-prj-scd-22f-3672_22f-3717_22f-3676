@@ -52,5 +52,11 @@ public class MySQLDAOFactory extends AbstractDAOFactory {
 		// TODO Auto-generated method stub
 		return new FavouriteWordsDAO();
 	}
+
+	@Override
+	public IDataAccessLayer createDataAccessLayer() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 }

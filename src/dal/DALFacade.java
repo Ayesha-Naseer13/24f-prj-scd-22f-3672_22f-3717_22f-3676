@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import dto.Translation;
+import dto.WordDTO;
 import dto.WordTranslation;
 import javafx.collections.ObservableList;
 
@@ -19,7 +20,7 @@ public class DALFacade implements IDALFacade {
     private IViewDAO viewDAO;
     private IDataAccessLayer posDAO;
     private IDAOFactory factory;
-	
+    private IWordDAO wordDAO;;
 		
     public DALFacade() {
     	factory = new MySQLDAOFactory();
@@ -32,6 +33,7 @@ public class DALFacade implements IDALFacade {
         this.frvtDAO = factory.createFavouriteWordsDAO();
         this.viewDAO = factory.createViewDAO();
         this.posDAO = factory.createDataAccessLayer();
+        this.wordDAO=factory.createWordDAO();
     }
 
     // Methods related to DictionaryDAO
@@ -88,7 +90,7 @@ public class DALFacade implements IDALFacade {
     @Override
     public Map<String, Map<String, String>> getMeanings(String[] words) {
         // TODO Auto-generated method stub
-        return null;
+        return segmentDAO.getMeanings(words);
     }
 
     @Override
@@ -130,4 +132,28 @@ public class DALFacade implements IDALFacade {
     public int removeFromFavourite(int wordId) {
     	return frvtDAO.removeFromFavourite(wordId);
     }
+
+	@Override
+	public boolean addWord(WordDTO word) {
+		// TODO Auto-generated method stub
+		return wordDAO.addWord(word);
+	}
+
+	@Override
+	public boolean deleteWord(String word) {
+		// TODO Auto-generated method stub
+		return wordDAO.deleteWord(word);
+	}
+
+	@Override
+	public boolean updateWord(WordDTO word) {
+		// TODO Auto-generated method stub
+		return wordDAO.updateWord(word);
+	}
+
+	@Override
+	public void closeConnection() {
+		// TODO Auto-generated method stub
+		
+	}
 }

@@ -6,7 +6,9 @@ import java.util.Map;
 
 import dal.DALFacade;
 import dal.IDALFacade;
+import dal.SegmentDAO;
 import dto.Translation;
+import dto.WordDTO;
 import dto.WordTranslation;
 import javafx.collections.ObservableList;
 
@@ -17,7 +19,10 @@ public class BLLFacade implements IBLLFacade {
     private ISearchHistoryBO searchHistoryBO;
     private IViewBO viewBO;
     private IFavouriteWordsBO favouriteBO;
-
+    private IScrapBO scrapBO;
+    private IWordServiceBLO wordBO;
+    private ISegmentBO segmentBO;
+    private SegmentDAO segmentdao;
     public BLLFacade() {
         IDALFacade dalFacade = new DALFacade();
         this.searchBO = new SearchBO();
@@ -26,7 +31,11 @@ public class BLLFacade implements IBLLFacade {
         this.searchHistoryBO = new SearchHistoryBO();
         this.viewBO = new ViewBO();
         this.favouriteBO = new FavouriteWordsBO();
+        this.scrapBO = new ScrapBO();
+        this.segmentBO = new SegmentBO(segmentdao);
+        this.wordBO = new WordServiceBLO();
     }
+    
 
     @Override
     public List<String> importCSV(String filePath) {
@@ -58,24 +67,19 @@ public class BLLFacade implements IBLLFacade {
         return searchHistoryBO.getSearchHistory();
     }
 
-    /**
-     * Segments a compound word and fetches meanings for its segments.
-     *
-     * @param compoundWord The input compound word.
-     * @return Map of each segment and its meanings.
-     */
+   
    
 
 	@Override
 	public String addWordFromUrl(String url) {
 		// TODO Auto-generated method stub
-		return null;
+		return scrapBO.addWordFromUrl(url);
 	}
 
 	@Override
 	public String addWordFromFile(String filePath) {
 		// TODO Auto-generated method stub
-		return null;
+		return scrapBO.addWordFromFile(filePath);
 	}
 
 	@Override
@@ -118,6 +122,34 @@ public class BLLFacade implements IBLLFacade {
 	@Override
 	public Map<String, Map<String, String>> segmentAndFetchMeaning(String compoundWord) {
 		// TODO Auto-generated method stub
-		return null;
+		return segmentBO.segmentAndFetchMeaning(compoundWord);
+	}
+
+
+	@Override
+	public boolean addWord(WordDTO word) {
+		// TODO Auto-generated method stub
+		return wordBO.addWord(word);
+	}
+
+
+	@Override
+	public boolean deleteWord(String word) {
+		// TODO Auto-generated method stub
+		return wordBO.deleteWord(word);
+	}
+
+
+	@Override
+	public boolean updateWord(WordDTO word) {
+		// TODO Auto-generated method stub
+		return wordBO.updateWord(word);
+	}
+
+
+	@Override
+	public void closeService() {
+		// TODO Auto-generated method stub
+		
 	}
 }
