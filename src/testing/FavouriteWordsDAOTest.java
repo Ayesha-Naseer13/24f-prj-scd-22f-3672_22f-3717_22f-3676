@@ -53,7 +53,7 @@ class FavouriteWordsDAOTest {
         when(mockResultSet.getString("urdu_mean")).thenReturn("سیب", "کیلا");
         when(mockResultSet.getString("persian_mean")).thenReturn("سیب", "موز");
 
-        List<String[]> words = favouriteWordsDAO.getAllWords();
+        List<String[]> words = favouriteWordsDAO.getWords();
 
         assertEquals(2, words.size());
         assertArrayEquals(new String[]{"1", "apple", "سیب", "سیب"}, words.get(0));
@@ -155,7 +155,7 @@ class FavouriteWordsDAOTest {
         when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Database error"));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () ->
-                favouriteWordsDAO.getAllWords());
+                favouriteWordsDAO.getWords());
 
         assertTrue(exception.getMessage().contains("Database error"));
     }
