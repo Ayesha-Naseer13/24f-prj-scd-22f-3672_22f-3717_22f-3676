@@ -7,10 +7,7 @@ import org.junit.platform.suite.api.Suite;
     CustomDictionaryDAOTest.class,
     DictionaryDAOTest.class,
     SearchDAOTest.class,
-    //ViewDAOTest.class,
-   // DataAccessLayerTest.class,
-   // FavouriteWordsDAOTest.class
- 
+
     
 })
 public class AllTestsSuite {

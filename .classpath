@@ -9,6 +9,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/javaFX"/>
 	<classpathentry kind="con" path="org.testng.TESTNG_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/5"/>
+<<<<<<< HEAD
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/javafx"/>
 	<classpathentry kind="lib" path="C:/Users/hafsa/Downloads/apache-log4j-2.24.1-bin/log4j-core-2.24.1.jar"/>
 	<classpathentry kind="lib" path="C:/Users/hafsa/Downloads/apache-log4j-2.24.1-bin/log4j-api-2.24.1.jar"/>
@@ -23,5 +24,10 @@
 	<classpathentry kind="lib" path="C:/Users/hafsa/Downloads/byte-buddy-1.15.10.jar"/>
 	<classpathentry kind="lib" path="C:/Users/hafsa/Downloads/byte-buddy-agent-1.15.10.jar"/>
 	<classpathentry kind="lib" path="C:/Users/hafsa/Downloads/mockito-core-5.5.0.jar"/>
+=======
+	<classpathentry kind="lib" path="C:/Users/lenovo/Documents/byte-buddy-1.15.10.jar"/>
+	<classpathentry kind="lib" path="C:/Users/lenovo/Documents/byte-buddy-agent-1.15.10.jar"/>
+	<classpathentry kind="lib" path="C:/Users/lenovo/Documents/mockito-core-5.5.0.jar"/>
+>>>>>>> c3d1dc2eaa879370b24781e712a0aa433e529e16
 	<classpathentry kind="output" path="bin"/>
 </classpath>

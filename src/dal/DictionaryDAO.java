@@ -20,7 +20,7 @@ public class DictionaryDAO implements IDictionaryDAO {
     public DictionaryDAO() {
         try {
             this.connection = DatabaseConfig.getConnection();
-            this.executorService = Executors.newFixedThreadPool(6); // Thread pool with 5 threads
+            this.executorService = Executors.newFixedThreadPool(5); // Thread pool with 5 threads
         } catch (SQLException e) {
             throw new RuntimeException("Failed to initialize database connection: " + e.getMessage(), e);
         }
