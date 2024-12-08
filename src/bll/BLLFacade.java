@@ -1,12 +1,11 @@
 package bll;
 
-import dal.DALFacade;
-import dal.IDALFacade;
-
 import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+import dal.DALFacade;
+import dal.IDALFacade;
 import dto.Translation;
 import dto.WordTranslation;
 import javafx.collections.ObservableList;
@@ -16,6 +15,8 @@ public class BLLFacade implements IBLLFacade {
     private DictionaryService dictionaryService; 
     private ICustomDictionaryBO customDic;
     private ISearchHistoryBO searchHistoryBO;
+    private IViewBO viewBO;
+    private IFavouriteWordsBO favouriteBO;
 
     public BLLFacade() {
         IDALFacade dalFacade = new DALFacade();
@@ -23,6 +24,8 @@ public class BLLFacade implements IBLLFacade {
         this.dictionaryService = new DictionaryServiceImpl();
         this.customDic = new CustomDictionaryBO();
         this.searchHistoryBO = new SearchHistoryBO();
+        this.viewBO = new ViewBO();
+        this.favouriteBO = new FavouriteWordsBO();
     }
 
     @Override
@@ -76,39 +79,34 @@ public class BLLFacade implements IBLLFacade {
 	}
 
 	@Override
-	public List<String[]> getAllWords() {
-		// TODO Auto-generated method stub
-		return null;
+	public List<String[]> getWords() {
+		return favouriteBO.getWords();
 	}
 
 	@Override
 	public boolean addToFavourite(String word) {
-		// TODO Auto-generated method stub
-		return false;
+		return favouriteBO.addToFavourite(word);
 	}
 
 	@Override
 	public List<String[]> getFavouriteWords() {
-		// TODO Auto-generated method stub
-		return null;
+		return favouriteBO.getFavouriteWords();
 	}
 
 	@Override
-	public void removeFromFavourite(int wordId) {
-		// TODO Auto-generated method stub
+	public int removeFromFavourite(int wordId) {
+		return favouriteBO.removeFromFavourite(wordId);
 		
 	}
 
 	@Override
 	public List<String> viewAllWords() {
-		// TODO Auto-generated method stub
-		return null;
+		return viewBO.viewAllWords();
 	}
 
 	@Override
 	public List<Translation> viewWordDetails(String word) {
-		// TODO Auto-generated method stub
-		return null;
+		return viewBO.viewWordDetails(word);
 	}
 
 	@Override

@@ -8,8 +8,9 @@ public class FavouriteWordsDAO implements IFavouriteWordsDAO{
     private static final String URL = "jdbc:mysql://localhost:3306/dictionary";
     private static final String USER = "root";
     private static final String PASSWORD = "";
-
-    public List<String[]> getAllWords() {
+   
+    @Override
+    public List<String[]> getWords() {
         List<String[]> words = new ArrayList<>();
         String query = "SELECT w.id, w.word, u.urdu_mean, p.persian_mean " +
                        "FROM words w " +
@@ -32,7 +33,7 @@ public class FavouriteWordsDAO implements IFavouriteWordsDAO{
         }
         return words;
     }
-
+    @Override
     public int getWordIdByWord(String word) {
         String query = "SELECT id FROM words WHERE word = ?";
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
@@ -50,6 +51,7 @@ public class FavouriteWordsDAO implements IFavouriteWordsDAO{
         }
     }
 
+    @Override
     public boolean addToFavourite(int wordId, String word) {
         String insertQuery = "INSERT INTO favourite_words (word_id, word) VALUES (?, ?)";
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
@@ -62,6 +64,7 @@ public class FavouriteWordsDAO implements IFavouriteWordsDAO{
         }
     }
 
+    @Override
     public List<String[]> getFavouriteWords() {
         List<String[]> favourites = new ArrayList<>();
         String query = "SELECT f.word_id, w.word, u.urdu_mean, p.persian_mean " +
@@ -87,7 +90,8 @@ public class FavouriteWordsDAO implements IFavouriteWordsDAO{
         return favourites;
     }
 
-    public void removeFromFavourite(int wordId) {
+    @Override
+    public int removeFromFavourite(int wordId) {
         String query = "DELETE FROM favourite_words WHERE word_id = ?";
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
              PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -96,5 +100,6 @@ public class FavouriteWordsDAO implements IFavouriteWordsDAO{
         } catch (SQLException e) {
             throw new RuntimeException("Error removing word from favourites: " + e.getMessage(), e);
         }
+        return wordId;
     }
 }

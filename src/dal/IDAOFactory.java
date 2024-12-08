@@ -10,4 +10,5 @@ public interface IDAOFactory {
     ISearchHistoryDAO createSearchHistoryDAO();
     IWordDAO createWordDAO();
     IFavouriteWordsDAO createFavouriteWordsDAO();
+    IDataAccessLayer createDataAccessLayer();
 }

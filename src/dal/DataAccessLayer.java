@@ -32,7 +32,7 @@ public class DataAccessLayer implements IDataAccessLayer{
             e.printStackTrace();  // Optionally print the stack trace for debugging purposes
         }
     }
-
+    @Override
     public List<String[]> getPosDetails(String arabicWord) {
         List<String[]> posDetailsList = new ArrayList<>();
 
