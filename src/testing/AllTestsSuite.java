@@ -6,7 +6,10 @@ import org.junit.platform.suite.api.Suite;
 @SelectClasses({
     CustomDictionaryDAOTest.class,
     DictionaryDAOTest.class,
-    SearchDAOTest.class
+    SearchDAOTest.class,
+    ViewDAOTest.class,
+    DataAccessLayerTest.class,
+    FavouriteWordsDAOTest.class
 })
 public class AllTestsSuite {
 }

@@ -22,6 +22,7 @@ public class ViewDAO implements IViewDAO {
     
 
     // Method to fetch all words
+    @Override
     public List<String> getAllWords() {
         List<String> words = new ArrayList<>();
         String query = "SELECT word FROM words";
@@ -38,6 +39,7 @@ public class ViewDAO implements IViewDAO {
     }
 
     // Method to fetch word details
+    @Override
     public List<Translation> getWordDetails(String word) {
         List<Translation> translations = new ArrayList<>();
         String query = "SELECT p.part_of_speech, p.stem_word, p.root_word, "

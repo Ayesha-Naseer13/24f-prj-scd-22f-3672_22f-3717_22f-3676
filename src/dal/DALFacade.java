@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+import dto.Translation;
 import dto.WordTranslation;
 import javafx.collections.ObservableList;
 
@@ -16,6 +17,7 @@ public class DALFacade implements IDALFacade {
     private ISegmentDAO segmentDAO;
     private IFavouriteWordsDAO frvtDAO;
     private IViewDAO viewDAO;
+    private IDataAccessLayer posDAO;
     private IDAOFactory factory;
 	
 		
@@ -29,6 +31,7 @@ public class DALFacade implements IDALFacade {
         this.segmentDAO = factory.createSegmentDAO();
         this.frvtDAO = factory.createFavouriteWordsDAO();
         this.viewDAO = factory.createViewDAO();
+        this.posDAO = factory.createDataAccessLayer();
     }
 
     // Methods related to DictionaryDAO
@@ -90,7 +93,41 @@ public class DALFacade implements IDALFacade {
 
     @Override
     public List<String[]> getPosDetails(String arabicWord) {
-        // TODO Auto-generated method stub
-        return null;
+        return posDAO.getPosDetails(arabicWord);
+    }
+    
+    @Override
+    public List<String> getAllWords() {
+    	return viewDAO.getAllWords();
+    }
+   
+    @Override
+    public List<Translation> getWordDetails(String word){
+    	return viewDAO.getWordDetails(word);
+    }
+    
+    @Override
+    public List<String[]> getWords() {
+        return frvtDAO.getWords();
+    }
+    
+    @Override
+    public int getWordIdByWord(String word) {
+    	 return frvtDAO.getWordIdByWord(word);
+    }
+    
+    @Override
+    public boolean addToFavourite(int wordId, String word) {
+    	return frvtDAO.addToFavourite(wordId,word);
+    }
+    
+    @Override
+    public List<String[]> getFavouriteWords() {
+    	return frvtDAO.getFavouriteWords();
+    }
+    
+    @Override
+    public int removeFromFavourite(int wordId) {
+    	return frvtDAO.removeFromFavourite(wordId);
     }
 }

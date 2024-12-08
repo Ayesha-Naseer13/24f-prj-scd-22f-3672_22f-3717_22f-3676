@@ -5,17 +5,17 @@ import java.util.List;
 import dal.FavouriteWordsDAO;
 import main.WordNotFoundException;
 
-public class FavouriteWordsBO {
+public class FavouriteWordsBO implements IFavouriteWordsBO{
     private FavouriteWordsDAO favouriteWordsDAO;
 
     public FavouriteWordsBO() {
         this.favouriteWordsDAO = new FavouriteWordsDAO();
     }
-
-    public List<String[]> getAllWords() {
-        return favouriteWordsDAO.getAllWords();
+    @Override
+    public List<String[]> getWords() {
+        return favouriteWordsDAO.getWords();
     }
-
+    @Override
     public boolean addToFavourite(String word) {
         int wordId = favouriteWordsDAO.getWordIdByWord(word);
         if (wordId == -1) {
@@ -23,12 +23,12 @@ public class FavouriteWordsBO {
         }
         return favouriteWordsDAO.addToFavourite(wordId, word);
     }
-
+    @Override
     public List<String[]> getFavouriteWords() {
         return favouriteWordsDAO.getFavouriteWords();
     }
-
-    public void removeFromFavourite(int wordId) {
-        favouriteWordsDAO.removeFromFavourite(wordId);
+    @Override
+    public int removeFromFavourite(int wordId) {
+        return favouriteWordsDAO.removeFromFavourite(wordId);
     }
 }
