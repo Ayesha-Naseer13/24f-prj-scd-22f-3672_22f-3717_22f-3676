@@ -70,7 +70,7 @@ public class SearchUI extends Application {
         searchByKeyButton.setToggleGroup(searchTypeGroup);
         searchByKeyButton.setSelected(true);
 
-        searchByValueButton = new RadioButton("Search by Translation"); // Moved to class-level
+        searchByValueButton = new RadioButton("Search by Meaning"); // Moved to class-level
         searchByValueButton.setToggleGroup(searchTypeGroup);
 
         languageGroup = new ToggleGroup();
