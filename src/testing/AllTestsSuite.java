@@ -7,6 +7,7 @@ import org.junit.platform.suite.api.Suite;
     CustomDictionaryDAOTest.class,
     DictionaryDAOTest.class,
     SearchDAOTest.class,
+<<<<<<< HEAD
 //    ViewDAOTest.class,
 //    DataAccessLayerTest.class,
 //    FavouriteWordsDAOTest.class,
@@ -15,6 +16,10 @@ import org.junit.platform.suite.api.Suite;
 //    ScrapDAOTest.class,
 //    SegmentDAOTest.class,
 //    
+=======
+
+    
+>>>>>>> 3f24c56293424912052925a6daf091c8dc8809f3
 })
 public class AllTestsSuite {
 }

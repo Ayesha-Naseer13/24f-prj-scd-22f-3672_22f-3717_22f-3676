@@ -4,7 +4,7 @@ import dal.SegmentDAO;
 
 import java.util.Map;
 
-public class SegmentBO {
+public class SegmentBO implements ISegmentBO {
     private final SegmentDAO segmentDAO;
 
     public SegmentBO(SegmentDAO segmentDAO) {

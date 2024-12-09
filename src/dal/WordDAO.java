@@ -1,33 +1,22 @@
+
 package dal;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import dto.WordDTO;
 
 public class WordDAO implements IWordDAO {
-    private static final String URL = "jdbc:mysql://localhost:3306/dictionary";
-    private static final String USER = "root";
-    private static final String PASSWORD = "";
-    private Connection connection;
-
-    public WordDAO() {
-        try {
-            this.connection = DriverManager.getConnection(URL, USER, PASSWORD);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
 
     @Override
     public boolean addWord(WordDTO word) {
         String wordQuery = "INSERT INTO words (word) VALUES (?)";
         String urduMeaningQuery = "INSERT INTO urdu_meanings (word_id, urdu_mean) VALUES (?, ?)";
         String persianMeaningQuery = "INSERT INTO persian_meanings (word_id, persian_mean) VALUES (?, ?)";
-        
-        try (PreparedStatement wordStmt = connection.prepareStatement(wordQuery, PreparedStatement.RETURN_GENERATED_KEYS);
+
+        try (Connection connection = DatabaseConfig.getConnection();
+             PreparedStatement wordStmt = connection.prepareStatement(wordQuery, PreparedStatement.RETURN_GENERATED_KEYS);
              PreparedStatement urduStmt = connection.prepareStatement(urduMeaningQuery);
              PreparedStatement persianStmt = connection.prepareStatement(persianMeaningQuery)) {
 
@@ -67,18 +56,7 @@ public class WordDAO implements IWordDAO {
             return false;
         } catch (SQLException e) {
             e.printStackTrace();
-            try {
-                connection.rollback(); // Ensure rollback on error
-            } catch (SQLException rollbackEx) {
-                rollbackEx.printStackTrace();
-            }
             return false; // Return false if there was an error
-        } finally {
-            try {
-                connection.setAutoCommit(true); // Reset auto-commit to true
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
     }
 
@@ -88,7 +66,7 @@ public class WordDAO implements IWordDAO {
         String persianQuery = "UPDATE persian_meanings SET persian_mean = ? WHERE word_id = (SELECT id FROM words WHERE word = ?)";
         boolean updated = false;
 
-        try {
+        try (Connection connection = DatabaseConfig.getConnection()) {
             connection.setAutoCommit(false); // Start transaction
 
             if (word.getUrduTranslation() != null) {
@@ -114,18 +92,7 @@ public class WordDAO implements IWordDAO {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            try {
-                connection.rollback(); // Ensure rollback on error
-            } catch (SQLException rollbackEx) {
-                rollbackEx.printStackTrace();
-            }
             return false;
-        } finally {
-            try {
-                connection.setAutoCommit(true); // Reset auto-commit to true
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
 
         return updated;
@@ -137,7 +104,7 @@ public class WordDAO implements IWordDAO {
         String deletePersianQuery = "DELETE FROM persian_meanings WHERE word_id = (SELECT id FROM words WHERE word = ?)";
         String deleteWordQuery = "DELETE FROM words WHERE word = ?";
 
-        try {
+        try (Connection connection = DatabaseConfig.getConnection()) {
             connection.setAutoCommit(false); // Start transaction
 
             try (PreparedStatement stmt = connection.prepareStatement(deleteUrduQuery)) {
@@ -163,29 +130,12 @@ public class WordDAO implements IWordDAO {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            try {
-                connection.rollback(); // Ensure rollback on error
-            } catch (SQLException rollbackEx) {
-                rollbackEx.printStackTrace();
-            }
             return false;
-        } finally {
-            try {
-                connection.setAutoCommit(true); // Reset auto-commit to true
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
     }
 
     @Override
     public void closeConnection() {
-        try {
-            if (connection != null && !connection.isClosed()) {
-                connection.close();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        // No explicit close required, as connections are managed within try-with-resources
     }
 }
