@@ -1,4 +1,5 @@
 package testing;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -9,9 +10,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -41,26 +40,29 @@ class DictionaryDAOTest {
         DatabaseConfig.setConnection(mockConnection);
         dictionaryDAO = new DictionaryDAO();
     }
+
+    // Existing Tests
+
     @Test
     void testImportCSV_HappyPath() throws Exception {
-        // Mock database behavior
         when(mockConnection.prepareStatement(anyString(), anyInt())).thenReturn(mockPreparedStatement);
         when(mockPreparedStatement.getGeneratedKeys()).thenReturn(mockResultSet);
         when(mockResultSet.next()).thenReturn(true);
         when(mockResultSet.getInt(1)).thenReturn(1);
 
-        // Create a temporary CSV file with content
         File tempFile = File.createTempFile("test", ".csv");
         try (PrintWriter writer = new PrintWriter(tempFile)) {
-            writer.println("word1,meaning1,meaning2"); // Make sure the format is as expected
+            writer.println("word1,meaning1,meaning2");
         }
 
-        
+        List<String> duplicates = dictionaryDAO.importCSV(tempFile.getAbsolutePath());
+
+        assertTrue(duplicates.isEmpty());
+        verify(mockConnection, times(1)).commit();
     }
 
     @Test
     void testImportCSV_InvalidFormat() throws Exception {
-        // Create a temporary CSV file with invalid format
         File tempFile = File.createTempFile("test_invalid", ".csv");
         try (PrintWriter writer = new PrintWriter(tempFile)) {
             writer.println("invalid_line");
@@ -74,12 +76,10 @@ class DictionaryDAOTest {
 
     @Test
     void testImportCSV_DuplicateWord() throws Exception {
-        // Mock duplicate check behavior
         when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
         when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet);
-        when(mockResultSet.next()).thenReturn(true); // Word exists
+        when(mockResultSet.next()).thenReturn(true);
 
-        // Create a temporary CSV file
         File tempFile = File.createTempFile("test_duplicate", ".csv");
         try (PrintWriter writer = new PrintWriter(tempFile)) {
             writer.println("word1,meaning1,meaning2");
@@ -92,12 +92,8 @@ class DictionaryDAOTest {
         verify(mockConnection, times(1)).commit();
     }
 
-    
-
-
     @Test
     void testImportCSV_EmptyFile() throws Exception {
-        // Create an empty temporary CSV file
         File tempFile = File.createTempFile("test_empty", ".csv");
 
         List<String> duplicates = dictionaryDAO.importCSV(tempFile.getAbsolutePath());
@@ -113,43 +109,96 @@ class DictionaryDAOTest {
         });
 
         assertTrue(exception.getMessage().contains("Error reading CSV file"));
- 
     }
-    
-    
-   
+
     @Test
     void testImportCSV_InvalidCSVFormat() throws Exception {
-        // Create a temporary CSV file with invalid format (no comma, only word)
         File tempFile = File.createTempFile("test_invalid_format", ".csv");
         try (PrintWriter writer = new PrintWriter(tempFile)) {
-            writer.println("word1"); // Invalid line format
-            writer.println("word2,meaning1"); // Invalid line format
+            writer.println("word1");
+            writer.println("word2,meaning1");
         }
 
         List<String> duplicates = dictionaryDAO.importCSV(tempFile.getAbsolutePath());
 
-        assertTrue(duplicates.isEmpty(), "Duplicates should be empty for invalid format");
-        verify(mockConnection, times(1)).commit(); // Ensure commit happens
+        assertTrue(duplicates.isEmpty());
+        verify(mockConnection, times(1)).commit();
     }
-
-    
-
 
     @Test
     void testImportCSV_EmptyWordOrMeaning() throws Exception {
-        // Create a temporary CSV file with an empty word and meaning
         File tempFile = File.createTempFile("test_empty_word_meaning", ".csv");
         try (PrintWriter writer = new PrintWriter(tempFile)) {
-            writer.println(",meaning1,meaning2");  // Empty word
-            writer.println("word2,,meaning2");    // Empty meaning
+            writer.println(",meaning1,meaning2");
+            writer.println("word2,,meaning2");
         }
 
         List<String> duplicates = dictionaryDAO.importCSV(tempFile.getAbsolutePath());
 
-        assertTrue(duplicates.isEmpty(), "No duplicates should be added for empty words/meanings");
-        verify(mockConnection, times(1)).commit(); // Ensure commit happens
+        assertTrue(duplicates.isEmpty());
+        verify(mockConnection, times(1)).commit();
     }
 
-    
+    // Additional Tests
+
+    @Test
+    void testImportCSV_LargeFile() throws Exception {
+        when(mockConnection.prepareStatement(anyString(), anyInt())).thenReturn(mockPreparedStatement);
+        when(mockPreparedStatement.getGeneratedKeys()).thenReturn(mockResultSet);
+        when(mockResultSet.next()).thenReturn(true);
+        when(mockResultSet.getInt(1)).thenReturn(1);
+
+        File tempFile = File.createTempFile("test_large", ".csv");
+        try (PrintWriter writer = new PrintWriter(tempFile)) {
+            for (int i = 0; i < 1000; i++) {
+                writer.println("word" + i + ",meaning1,meaning2");
+            }
+        }
+
+        List<String> duplicates = dictionaryDAO.importCSV(tempFile.getAbsolutePath());
+
+        assertTrue(duplicates.isEmpty());
+        verify(mockConnection, times(1)).commit();
+    }
+
+    @Test
+    void testImportCSV_ConcurrentProcessing() throws Exception {
+        when(mockConnection.prepareStatement(anyString(), anyInt())).thenReturn(mockPreparedStatement);
+        when(mockPreparedStatement.getGeneratedKeys()).thenReturn(mockResultSet);
+        when(mockResultSet.next()).thenReturn(true);
+        when(mockResultSet.getInt(1)).thenReturn(1);
+
+        File tempFile = File.createTempFile("test_concurrent", ".csv");
+        try (PrintWriter writer = new PrintWriter(tempFile)) {
+            for (int i = 0; i < 50; i++) {
+                writer.println("word" + i + ",meaning1,meaning2");
+            }
+        }
+
+        List<String> duplicates = dictionaryDAO.importCSV(tempFile.getAbsolutePath());
+
+        assertTrue(duplicates.isEmpty());
+        verify(mockConnection, times(1)).commit();
+    }
+
+    @Test
+    void testImportCSV_CharacterEncoding() throws Exception {
+        when(mockConnection.prepareStatement(anyString(), anyInt())).thenReturn(mockPreparedStatement);
+        when(mockPreparedStatement.getGeneratedKeys()).thenReturn(mockResultSet);
+        when(mockResultSet.next()).thenReturn(true);
+        when(mockResultSet.getInt(1)).thenReturn(1);
+
+        File tempFile = File.createTempFile("test_encoding", ".csv");
+        try (PrintWriter writer = new PrintWriter(tempFile, "UTF-8")) {
+            writer.println("cliché,meaning1,meaning2"); // Non-ASCII character
+        }
+
+        List<String> duplicates = dictionaryDAO.importCSV(tempFile.getAbsolutePath());
+
+        assertTrue(duplicates.isEmpty());
+        verify(mockConnection, times(1)).commit();
+    }
+
+
+
 }
